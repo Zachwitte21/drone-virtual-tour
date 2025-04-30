@@ -1,34 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <title>Virtual Tour</title>
+    <meta charset="UTF-8">
+    <title>UD Virtual Tour</title>
     <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
     <style>
       html, body {
         margin: 0;
         padding: 0;
         height: 100%;
-        overflow: hidden;
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      .main-content {
+        flex: 1;
+        position: relative;
+        height: calc(100vh - 60px); 
+      }
+      
+      .scene-container {
+        width: 100%;
+        height: 100%;
+      }
+      
+      .footer {
+        background-color: #00539f; 
+        color: white;
+        text-align: center;
+        padding: 1rem;
+      }
+
+      .controls-info {
+        position: absolute;
+        bottom: 70px;
+        left: 20px;
+        background-color: rgba(0, 83, 159, 0.7);
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 14px;
+        z-index: 100;
+      }
+
+      .controls-info p {
+        margin: 0;
+        line-height: 1.5;
       }
     </style>
+    <script>
+      // Register custom component for vertical movement
+      AFRAME.registerComponent('vertical-controls', {
+        init: function() {
+          this.cameraRig = this.el;
+          this.keyDown = {};
+          
+          // Setup key listeners
+          window.addEventListener('keydown', this.onKeyDown.bind(this));
+          window.addEventListener('keyup', this.onKeyUp.bind(this));
+        },
+        
+        onKeyDown: function(evt) {
+          this.keyDown[evt.code] = true;
+        },
+        
+        onKeyUp: function(evt) {
+          this.keyDown[evt.code] = false;
+        },
+        
+        tick: function(time, deltaTime) {
+          // Move speed in m/s, adjusted by time delta
+          const moveSpeed = 5 * (deltaTime / 1000);
+          const position = this.cameraRig.getAttribute('position');
+          let modified = false;
+          
+          // Space key for up
+          if (this.keyDown['Space']) {
+            position.y += moveSpeed;
+            modified = true;
+          }
+          
+          // Control key for down
+          if (this.keyDown['ControlLeft'] || this.keyDown['ControlRight']) {
+            position.y = Math.max(1, position.y - moveSpeed);
+            modified = true;
+          }
+          
+          if (modified) {
+            this.cameraRig.setAttribute('position', position);
+          }
+        }
+      });
+    </script>
   </head>
   <body>
-    <a-scene background="color: #ECECEC">
-      <a-assets>
-        <a-asset-item id="tour-model" src="https://udel-drone-vt.s3.amazonaws.com/DigitalCampus12-16-24.glb"></a-asset-item>
-      </a-assets>
+    <!-- Main content with A-Frame -->
+    <div class="main-content">
+      <div class="controls-info">
+        <p><u><strong>Controls:</strong></u><br>
+          WASD = Move<br>
+          Mouse = Look<br>
+          Space = Up<br>
+          Ctrl = Down</p>
+      </div>
+      <div class="scene-container">
+        <a-scene embedded background="color: #87CEEB">
+          <a-assets>
+            <a-asset-item id="campus-model" src="https://udel-drone-vt.s3.amazonaws.com/combined_model.glb"></a-asset-item>
+          </a-assets>
 
-      <a-entity gltf-model="#tour-model" position="105 -32 30" rotation="0 180 0" scale="1 1 1"></a-entity>
+          <!-- Updated to use gltf-model with the new GLB file -->
+          <a-entity gltf-model="#campus-model" position="0 0 0" rotation="270 0 0" scale="1 1 1"></a-entity>
 
-      <!-- Camera and movement -->
-      <a-entity position="0 1.6 5">
-        <a-camera wasd-controls look-controls></a-camera>
-      </a-entity>
+          <!-- Camera and movement with added vertical-controls -->
+          <a-entity id="camera-rig" position="110 5 140" vertical-controls>
+            <a-camera wasd-controls look-controls rotation="0 180 0"></a-camera>
+          </a-entity>
 
-      <!-- Lighting -->
-      <a-entity light="type: ambient; intensity: 0.8"></a-entity>
-      <a-entity light="type: directional; intensity: 0.5" position="1 1 0.5"></a-entity>
-    </a-scene>
+          <!-- Lighting -->
+          <a-entity light="type: ambient; intensity: 0.8"></a-entity>
+          <a-entity light="type: directional; intensity: 0.5" position="1 1 0.5"></a-entity>
+        </a-scene>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>&copy; 2025 University of Delaware Drone VIP | All Rights Reserved</p>
+    </div>
   </body>
 </html>
